@@ -20,6 +20,7 @@
  */
 
 #include <dwg.h>
+#include <stdio.h>
 
 #define INPUT_FILE "sample.dwg"
 
@@ -39,6 +40,7 @@ void
 add_text(double x, double y, char *txt)
 {
   // Make something with that
+  printf("text %s\n",txt);
 }
 
 int
@@ -77,8 +79,11 @@ load_dwg(char *filename)
 }
 
 int
-main()
+main(int argc, char ** argv)
 {
-  load_dwg(INPUT_FILE);
+  if (argc >=1)
+    {
+      load_dwg(argv[1]);
+    }
   return 0;
 }

@@ -1,5 +1,7 @@
 lib_LTLIBRARIES = libredwg.la
 
+CC=g++
+
 libredwg_la_SOURCES = \
 	dwg.c \
 	common.c \

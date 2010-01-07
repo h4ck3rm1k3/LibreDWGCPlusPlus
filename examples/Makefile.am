@@ -1,4 +1,7 @@
-check_PROGRAMS = load_dwg get_bmp dwg_ps test testSVG
+
+all :load_dwg
+
+check_PROGRAMS = load_dwg get_bmp dwg_ps test testSVG 
 
 test_SOURCES = test.c
 test_LDADD = -lredwg
@@ -15,7 +18,7 @@ get_bmp_LDADD = -lredwg
 dwg_ps_SOURCES = dwg_ps.c
 dwg_ps_LDADD = -lredwg -lps
 
-AM_CFLAGS = -Wextra
+AM_CFLAGS = -Wextra -I../src
 
 EXTRA_DIST = sample.dwg
 
