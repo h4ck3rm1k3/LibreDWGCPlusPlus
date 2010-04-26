@@ -1,13 +1,12 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
 /*    originally written by Felipe Castro <felipo at users.sourceforge.net>  */
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
 /*  General Public License as published by the Free Software Foundation,     */
@@ -18,6 +17,7 @@
 
 #include <stdio.h>
 #include <dwg.h>
+#include "suffix.c"
 
 int
 test_dwg_c(char *filename);
@@ -25,13 +25,9 @@ test_dwg_c(char *filename);
 int
 main(int argc, char *argv[])
 {
-  if (argc > 1)
-    return (test_dwg_c(argv[1]));
-  else
-    return (test_dwg_c(NULL));
+  REQUIRE_INPUT_FILE_ARG (argc);
+  test_dwg_c (argv[1]);
 }
-
-#define FILENAME "example"
 
 int
 test_dwg_c(char *filename)
@@ -39,10 +35,7 @@ test_dwg_c(char *filename)
   int error;
   Dwg_Data dwg_struct;
 
-  if (filename)
-    error = dwg_read_file(filename, &dwg_struct);
-  else
-    error = dwg_read_file(FILENAME ".dwg", &dwg_struct);
+  error = dwg_read_file(filename, &dwg_struct);
 
   dwg_free(&dwg_struct);
 
@@ -55,6 +48,8 @@ test_dwg_c(char *filename)
       printf("\nSUCCESS!\n\n");
     }
 
-  return error;
+  /* This value is the return value for `main',
+     so clamp it to either 0 or 1.  */
+  return error ? 1 : 0;
 }
 

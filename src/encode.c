@@ -1,6 +1,5 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
@@ -8,7 +7,7 @@
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
 /*  Copyright (C) 2009 Rodrigo Rodrigues da Silva <pitanga@members.fsf.org>  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
 /*  General Public License as published by the Free Software Foundation,     */
@@ -19,6 +18,8 @@
 
 /// Encode - doesn't work yet!
 
+#include "config.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,18 @@
 #include "dwg.h"
 #include "encode.h"
 
+/* The logging level for the write (encode) path.  */
+static unsigned int loglevel;
+
+#ifdef USE_TRACING
+/* This flag means we have checked the environment variable
+   LIBREDWG_TRACE and set `loglevel' appropriately.  */
+static bool env_var_checked_p;
+
+#define DWG_LOGLEVEL loglevel
+#endif  /* USE_TRACING */
+
+#include "logging.h"
 
 /*--------------------------------------------------------------------------------
  * Welcome to the dark side of the moon...
@@ -40,7 +53,7 @@
   bit_write_##type(dat, _obj->name);\
   if (loglevel>=2)\
     {\
-        fprintf(stderr, #name ": " FORMAT_##type "\n", _obj->name);\
+        LOG_TRACE(#name ": " FORMAT_##type "\n", _obj->name)\
     }
 
 #define FIELD_VALUE(name) _obj->name
@@ -58,10 +71,10 @@
 #define FIELD_MS(name) FIELD(name, MS);
 #define FIELD_TV(name) FIELD(name, TV);
 #define FIELD_T FIELD_TV /*TODO: implement version dependant string fields */
-#define FIELD_BT(name) FIELD(name, BT); 
+#define FIELD_BT(name) FIELD(name, BT);
 
 #define FIELD_DD(name, _default) bit_write_DD(dat, FIELD_VALUE(name), _default);
-#define FIELD_2DD(name, d1, d2) FIELD_DD(name.x, d1); FIELD_DD(name.y, d2);  
+#define FIELD_2DD(name, d1, d2) FIELD_DD(name.x, d1); FIELD_DD(name.y, d2);
 
 #define FIELD_2RD(name) FIELD(name.x, RD); FIELD(name.y, RD);
 #define FIELD_2BD(name) FIELD(name.x, BD); FIELD(name.y, BD);
@@ -82,6 +95,13 @@ bit_write_BE(dat, FIELD_VALUE(name.x), FIELD_VALUE(name.y), FIELD_VALUE(name.z))
   for (vcount=0; vcount< _obj->size; vcount++)\
     {\
       FIELD_2RD(name[vcount]);\
+    }
+
+#define FIELD_2DD_VECTOR(name, size)\
+  FIELD_2RD(name[0]);\
+  for (vcount = 1; vcount < _obj->size; vcount++)\
+    {\
+      FIELD_2DD(name[vcount], FIELD_VALUE(name[vcount - 1].x), FIELD_VALUE(name[vcount - 1].y));\
     }
 
 #define FIELD_3DPOINT_VECTOR(name, size)\
@@ -117,7 +137,7 @@ bit_write_BE(dat, FIELD_VALUE(name.x), FIELD_VALUE(name.y), FIELD_VALUE(name.z))
           bit_write_##type(dat, _obj->name[vcount]);\
           if (loglevel>=2)\
             {\
-                fprintf(stderr, #name "[%d]: " FORMAT_##type "\n", vcount, _obj->name[vcount]);\
+                LOG_TRACE(#name "[%d]: " FORMAT_##type "\n", vcount, _obj->name[vcount])\
             }\
         }\
     }
@@ -134,6 +154,8 @@ bit_write_BE(dat, FIELD_VALUE(name.x), FIELD_VALUE(name.y), FIELD_VALUE(name.z))
     }
 
 #define HANDLE_VECTOR(name, sizefield, code) HANDLE_VECTOR_N(name, FIELD_VALUE(sizefield), code)
+
+#define FIELD_XDATA(name, size)
 
 #define COMMON_ENTITY_HANDLE_DATA
 
@@ -159,7 +181,7 @@ static void dwg_encode_##token (Dwg_Object* obj, Dwg_Entity_##token * _obj, Bit_
   int vcount, rcount, rcount2, rcount3;\
 	Dwg_Data* dwg = obj->parent;\
   if (loglevel)\
-    fprintf (stderr, "Entity " #token ":\n");\
+    LOG_INFO("Entity " #token ":\n")\
 
 #define DWG_ENTITY_END }
 
@@ -191,8 +213,6 @@ dwg_encode_object(Dwg_Object * obj, Bit_Chain * dat);
  * Public variables
  */
 
-static int loglevel = 2; //This is not the same as loglevel from decode.c !
-
 /*--------------------------------------------------------------------------------
  * Public functions
  */
@@ -212,6 +232,18 @@ dwg_encode_chains(Dwg_Data * dwg, Bit_Chain * dat)
   Object_Map *omap;
   Object_Map pvzmap;
   Dwg_Object *obj;
+
+#ifdef USE_TRACING
+  /* Before starting, set the logging level, but only do so once.  */
+  if (! env_var_checked_p)
+    {
+      char *probe = getenv ("LIBREDWG_TRACE");
+
+      if (probe)
+        loglevel = atoi (probe);
+      env_var_checked_p = true;
+    }
+#endif  /* USE_TRACING */
 
   bit_chain_alloc(dat);
 
@@ -835,7 +867,7 @@ dwg_encode_entity(Dwg_Object * obj, Bit_Chain * dat)
      break;
      */
   default:
-    fprintf(stderr, "Error: unknown object-type while encoding entity\n");
+    LOG_ERROR("Error: unknown object-type while encoding entity\n")
     exit(-1);
     }
 
@@ -883,7 +915,7 @@ void dwg_encode_common_entity_handle_data(Bit_Chain * dat, Dwg_Object * obj){
 
 void dwg_encode_handleref_with_code(Bit_Chain * dat, Dwg_Object * obj, Dwg_Object_Ref* ref, int code){
   if (ref->handleref.code != code){
-    if (loglevel) fprintf(stderr, "warning: trying to write handle with wrong code. Expected code=%d, got %d.\n", code, ref->handleref.code);
+    LOG_INFO("warning: trying to write handle with wrong code. Expected code=%d, got %d.\n", code, ref->handleref.code)
   }
 
   //TODO: implement-me!

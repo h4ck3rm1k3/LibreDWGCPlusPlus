@@ -1,13 +1,12 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
 /*    originally written by Felipe Castro <felipo at users.sourceforge.net>  */
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*  Copyright (C) 2009 Rodrigo Rodrigues da Silva <pitanga@members.fsf.org>  */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
@@ -17,12 +16,14 @@
 /*  along with this program.  If not, see <http://www.gnu.org/licenses/>.    */
 /*****************************************************************************/
 
+#include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
 #include "bits.h"
+#include "logging.h"
 
 /*------------------------------------------------------------------------------
  * Private functions prototypes
@@ -151,15 +152,13 @@ bit_read_4BITS(Bit_Chain * dat)
 
 /** Write 1 nibble.
  */
-//void  bit_write_4BITS(char , Bit_Chain * bit_data);
-
 void
 bit_write_4BITS(Bit_Chain * dat, unsigned char value)
 {
-  bit_advance_position(dat, 4);
   unsigned char byte;
   unsigned char remainder1, remainder2;
 
+  bit_advance_position(dat, 4);
   byte = dat->chain[dat->byte];
   remainder1 = byte & (0xff << (8 - dat->bit));
   remainder2 = byte & (0xff >> (dat->bit+4));
@@ -368,14 +367,14 @@ bit_read_BL(Bit_Chain * dat)
     }
   else if (two_bit_code == 1)
     {
-      result = bit_read_RC(dat);
+      result = bit_read_RC(dat) & 0xFF;
       return (result);
     }
   else if (two_bit_code == 2)
     return (0);
   else /* if (two_bit_code == 3) */
     {
-      fprintf(stderr, "Error: bit_read_BL: unexpected 2-bit code: '11'\n");
+      LOG_ERROR("bit_read_BL: unexpected 2-bit code: '11'")
       return (256);
     }
 }
@@ -421,7 +420,7 @@ bit_read_BD(Bit_Chain * dat)
     return (0.0);
   else /* if (two_bit_code == 3) */
     {
-      fprintf(stderr, "Error: bit_read_BD: unexpected 2-bit code: '11'\n");
+      LOG_ERROR("bit_read_BD: unexpected 2-bit code: '11'")
       /* create a Not-A-Number (NaN) */
       res = (long int *) &result;
       res[0] = -1;
@@ -476,7 +475,7 @@ bit_read_MC(Bit_Chain * dat)
       result |= ((long unsigned int) byte[i]) << j;
     }
 
-  fprintf(stderr, "bit_read_MC: error parsing modular char.\n");
+  LOG_ERROR("bit_read_MC: error parsing modular char.")
   return 0; /* error... */
 }
 
@@ -545,7 +544,7 @@ bit_read_MS(Bit_Chain * dat)
         word[i] &= 0x7fff;
       result |= ((long unsigned int) word[i]) << j;
     }
-  fprintf(stderr, "bit_read_MS: error parsing modular short.\n");
+  LOG_ERROR("bit_read_MS: error parsing modular short.")
   return 0; /* error... */
 }
 
@@ -735,9 +734,9 @@ bit_read_H(Bit_Chain * dat, Dwg_Handle * handle)
   handle->value = 0;
   if (handle->size > 4)
     {
-      fprintf(stderr,
-          "Error: handle-reference is longer than 4 bytes: %i.%i.%lu\n",
-          handle->code, handle->size, handle->value);
+      LOG_ERROR(
+          "handle-reference is longer than 4 bytes: %i.%i.%lu",
+          handle->code, handle->size, handle->value)
       handle->size = 0;
       return (-1);
     }
@@ -917,7 +916,6 @@ bit_write_L(Bit_Chain * dat, long unsigned int value)
 void
 bit_read_CMC(Bit_Chain * dat, Dwg_Color* color)
 {
-  color = (Dwg_Color*) malloc(sizeof(Dwg_Color));
   color->index = bit_read_BS(dat);
   if (dat->version >= R_2004)
     {

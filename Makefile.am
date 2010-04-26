@@ -1,3 +1,5 @@
-SUBDIRS = src examples
-CC=g++
-EXTRA_DIST = README
+ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = src doc examples
+
+EXTRA_DIST = README README-alpha

@@ -1,24 +1,28 @@
+check_PROGRAMS = load_dwg get_bmp test testSVG
 
-all :load_dwg
+if HAVE_LIBPS
+check_PROGRAMS += dwg_ps
+dwg_ps_SOURCES = dwg_ps.c
+dwg_ps_LDADD = -lps
+endif
 
-check_PROGRAMS = load_dwg get_bmp dwg_ps test testSVG 
+AM_LDFLAGS = -L../src -lredwg
 
 test_SOURCES = test.c
-test_LDADD = -lredwg
 
 testSVG_SOURCES = testSVG.c
-testSVG_LDADD   = -lredwg -lm
+testSVG_LDADD   = -lm
 
 load_dwg_SOURCES = load_dwg.c
-load_dwg_LDADD = -lredwg
 
 get_bmp_SOURCES = get_bmp.c
-get_bmp_LDADD = -lredwg
 
-dwg_ps_SOURCES = dwg_ps.c
-dwg_ps_LDADD = -lredwg -lps
+AM_CFLAGS = -Wextra -I$(top_srcdir)/src
 
-AM_CFLAGS = -Wextra -I../src
+TESTS_ENVIRONMENT = \
+ PROGS='$(check_PROGRAMS)' \
+ srcdir='$(srcdir)'
 
-EXTRA_DIST = sample.dwg
+TESTS = alive.test
 
+EXTRA_DIST = example.dwg sample.dwg suffix.c $(TESTS)

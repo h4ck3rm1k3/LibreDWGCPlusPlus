@@ -1,13 +1,12 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
 /*    originally written by Felipe Castro <felipo at users.sourceforge.net>  */
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
 /*  General Public License as published by the Free Software Foundation,     */
@@ -20,9 +19,7 @@
  */
 
 #include <dwg.h>
-#include <stdio.h>
-
-#define INPUT_FILE "sample.dwg"
+#include "suffix.c"
 
 void
 add_line(double x1, double y1, double x2, double y2)
@@ -40,7 +37,6 @@ void
 add_text(double x, double y, char *txt)
 {
   // Make something with that
-  printf("text %s\n",txt);
 }
 
 int
@@ -79,11 +75,9 @@ load_dwg(char *filename)
 }
 
 int
-main(int argc, char ** argv)
+main (int argc, char *argv[])
 {
-  if (argc >=1)
-    {
-      load_dwg(argv[1]);
-    }
+  REQUIRE_INPUT_FILE_ARG (argc);
+  load_dwg (argv[1]);
   return 0;
 }

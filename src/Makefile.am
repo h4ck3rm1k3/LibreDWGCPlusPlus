@@ -1,13 +1,12 @@
 lib_LTLIBRARIES = libredwg.la
 
-CC=g++
-
 libredwg_la_SOURCES = \
 	dwg.c \
 	common.c \
 	bits.c \
 	decode.c \
-	encode.c
+	encode.c \
+        print.c
 
 libredwg_la_LDFLAGS = \
 	-version-info 0:0:0
@@ -15,12 +14,14 @@ libredwg_la_LDFLAGS = \
 include_HEADERS = dwg.h
 
 EXTRA_DIST = \
+	dwg.spec \
 	$(include_HEADERS) \
 	common.h \
 	bits.h \
 	decode.h \
-	example.dwg \
-	encode.h
+	encode.h \
+	logging.h \
+        print.h
 
 #check_PROGRAMS = test testsvg
 
@@ -31,7 +32,7 @@ EXTRA_DIST = \
 
 #testsvg_SOURCES = \
 #	testSVG.c
-	
+
 #testsvg_LDADD = libredwg.la
 
 #testsvg_LDFLAGS = -lm

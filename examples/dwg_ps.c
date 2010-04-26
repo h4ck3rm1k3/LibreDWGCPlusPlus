@@ -1,13 +1,12 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
 /*    originally written by Felipe Castro <felipo at users.sourceforge.net>  */
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
 /*  General Public License as published by the Free Software Foundation,     */
@@ -22,9 +21,7 @@
 #include <stdio.h>
 #include <dwg.h>
 #include <libps/pslib.h>
-
-#define INPUT_FILE "sample.dwg"
-#define OUTPUT_FILE "sample.ps"
+#include "suffix.c"
 
 void
 create_postscript(Dwg_Data *dwg, char *output)
@@ -106,25 +103,28 @@ create_postscript(Dwg_Data *dwg, char *output)
   PS_shutdown();
 }
 
+int
 main(int argc, char *argv[])
 {
   int success;
+  char *outfile;
   Dwg_Data dwg;
 
-  if (argc > 1)
-    success = dwg_read_file(argv[1], &dwg);
-  else
-    success = dwg_read_file(INPUT_FILE, &dwg);
+  REQUIRE_INPUT_FILE_ARG (argc);
+
+  success = dwg_read_file(argv[1], &dwg);
   if (success)
     {
       puts("Not able to read dwg file!");
-      return -1;
+      return 1;
     }
 
-  create_postscript(&dwg, OUTPUT_FILE);
+  outfile = suffix (argv[1], "ps");
+  create_postscript(&dwg, outfile);
   dwg_free(&dwg);
 
-  puts("Success! See the '" OUTPUT_FILE "'file");
+  printf ("Success! See the file '%s'\n", outfile);
+  free (outfile);
   return 0;
 }
 

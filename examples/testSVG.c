@@ -1,13 +1,12 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
 /*    originally written by Felipe Castro <felipo at users.sourceforge.net>  */
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
 /*  General Public License as published by the Free Software Foundation,     */
@@ -23,7 +22,7 @@
 #include <math.h>
 #include <dwg.h>
 #include "../src/bits.h"
-
+#include "suffix.c"
 
 double model_xmin, model_ymin;
 double page_width, page_height, scale;
@@ -45,13 +44,9 @@ output_SVG(Dwg_Data* dwg);
 int
 main(int argc, char *argv[])
 {
-  if (argc > 1)
-    return (test_SVG(argv[1]));
-  else
-    return (test_SVG(NULL));
+  REQUIRE_INPUT_FILE_ARG (argc);
+  return test_SVG (argv[1]);
 }
-
-#define FILENAME "example"
 
 int
 test_SVG(char *filename)
@@ -59,10 +54,7 @@ test_SVG(char *filename)
   int error;
   Dwg_Data dwg;
 
-  if (filename)
-    error = dwg_read_file(filename, &dwg);
-  else
-    error = dwg_read_file(FILENAME ".dwg", &dwg);
+  error = dwg_read_file(filename, &dwg);
 
   if (!error)
     {
@@ -70,7 +62,9 @@ test_SVG(char *filename)
     }
 
   dwg_free(&dwg);
-  return error;
+  /* This value is the return value for `main',
+     so clamp it to either 0 or 1.  */
+  return error ? 1 : 0;
 }
 
 void
@@ -192,22 +186,38 @@ output_object(Dwg_Object* obj){
 void output_BLOCK_HEADER(Dwg_Object_Ref* ref)
 {
   Dwg_Object* obj;
-
   Dwg_Object_BLOCK_HEADER* hdr;
-  hdr = ref->obj->tio.object->tio.BLOCK_HEADER;
 
+  if (!ref)
+    {
+      fprintf(stderr, "Found null object reference. Could not output an SVG symbol for this BLOCK_HEADER\n");
+      return;
+    }
+  if (!ref->obj)
+    {
+      fprintf(stderr, "Found null ref->obj\n");
+      return;
+    }
+
+  /* TODO: Review.  (This check avoids a segfault, but it is
+     still unclear whether or not the condition is valid.)  */
+  if (!ref->obj->tio.object)
+    {
+      fprintf(stderr, "Found null ref->obj->tio.object\n");
+      return;
+    }
+
+  hdr = ref->obj->tio.object->tio.BLOCK_HEADER;
   printf(
       "\t<g id=\"symbol-%lu\" >\n\t\t<!-- %s -->\n", ref->absolute_ref, hdr->entry_name);
 
-  //TODO:still not quite right I think...
-  obj = hdr->first_entity->obj;
-  while(obj && obj != hdr->last_entity->obj)
+  obj = get_first_owned_object(ref->obj, hdr);
+
+  while(obj)
     {
       output_object(obj);
-      obj = dwg_next_object(obj);
+      obj = get_next_owned_object(ref->obj, obj, hdr);
     }
-  //output the last one:
-  if (obj) output_object(obj);
 
   printf("\t</g>\n");
 }

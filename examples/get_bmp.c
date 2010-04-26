@@ -1,13 +1,12 @@
 /*****************************************************************************/
 /*  LibreDWG - Free DWG library                                              */
-/*  http://code.google.com/p/libredwg/                                       */
 /*                                                                           */
 /*    based on LibDWG - Free DWG read-only library                           */
 /*    http://sourceforge.net/projects/libdwg                                 */
 /*    originally written by Felipe Castro <felipo at users.sourceforge.net>  */
 /*                                                                           */
 /*  Copyright (C) 2008, 2009 Free Software Foundation, Inc.                  */
-/*  Copyright (C) 2009 Felipe Sanches <jucablues@users.sourceforge.net>      */
+/*  Copyright (C) 2009 Felipe Corrêa da Silva Sanches <juca@members.fsf.org> */
 /*                                                                           */
 /*  This library is free software, licensed under the terms of the GNU       */
 /*  General Public License as published by the Free Software Foundation,     */
@@ -22,13 +21,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <dwg.h>
-
-#define INPUT_FILE "sample.dwg"
-#define OUTPUT_FILE "sample.bmp"
+#include "suffix.c"
 
 int
 get_bmp(char *filename)
 {
+  char *outfile;
   char *data;
   int success;
   long size;
@@ -67,10 +65,12 @@ get_bmp(char *filename)
       return -3;
     }
 
-  fh = fopen(OUTPUT_FILE, "w");
+  outfile = suffix (filename, "bmp");
+  fh = fopen (outfile, "w");
   if (!fh)
     {
-      puts("Unable to write a '" OUTPUT_FILE "' file");
+      printf ("Unable to write file '%s'\n", outfile);
+      free (outfile);
       return -4;
     }
 
@@ -87,14 +87,16 @@ get_bmp(char *filename)
   retval = fwrite(data, 1, size, fh);
   fclose(fh);
 
-  puts("Success! See the file '" OUTPUT_FILE "'");
+  printf ("Success! See the file '%s'\n", outfile);
+  free (outfile);
   return success;
 }
 
 int
-main()
+main (int argc, char *argv[])
 {
-  get_bmp(INPUT_FILE);
+  REQUIRE_INPUT_FILE_ARG (argc);
+  get_bmp (argv[1]);
   return 0;
 }
 
